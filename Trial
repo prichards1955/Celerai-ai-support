@@ -1,0 +1,67 @@
+from flask import Flask, request, jsonify, render_template
+
+app = Flask(__name__)
+
+knowledge_base = {
+    "install sensor": "To install a Celerai AI sensor, mount it in a designated location and ensure it is within the wireless range of the AI Gateway. Follow on-screen pairing instructions.",
+    "troubleshoot gateway": "If your AI Gateway is not connecting, check power, network settings, and restart the device. If the issue persists, reset to factory settings.",
+    "calibrate sensor": "Use the Celerai AI dashboard to access calibration settings. The AI will auto-calibrate in normal operation, but manual adjustments can be made if needed."
+}
+
+@app.route("/")
+def index():
+    return render_template("index.html")  # Make sure index.html exists in templates/
+
+@app.route('/chatbot', methods=['POST'])
+def chatbot():
+    data = request.json
+    query = data.get("query", "").lower()
+    response = knowledge_base.get(query, "I'm sorry, I don't have that information yet. Would you like to create a support ticket?")
+    return jsonify({"response": response})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+flask
+gunicorn
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celerai AI Support</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        #chatbox { width: 80%; height: 300px; margin: auto; border: 1px solid #ddd; padding: 10px; overflow-y: scroll; }
+        .input-area { margin-top: 10px; }
+        .input-area input { padding: 10px; width: 60%; }
+        .input-area button { padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Celerai AI Tech Support</h1>
+    <div id="chatbox"></div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Ask a question...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <script>
+        function sendMessage() {
+            var input = document.getElementById("userInput").value;
+            if (input === "") return;
+            var chatbox = document.getElementById("chatbox");
+            chatbox.innerHTML += `<p><strong>You:</strong> ${input}</p>`;
+            fetch('/chatbot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: input })
+            })
+            .then(response => response.json())
+            .then(data => {
+                chatbox.innerHTML += `<p><strong>AI:</strong> ${data.response}</p>`;
+                document.getElementById("userInput").value = "";
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
